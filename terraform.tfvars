@@ -1,0 +1,5 @@
+aws_access_key = ""
+aws_secret_key = ""
+aws_key_path = "./example_keypairs/id_rsa.pub"
+aws_key_name = "VFQ"
+private_key_path = "./example_keypairs/id_rsa"
