@@ -126,7 +126,6 @@ resource "aws_eip" "web-2" {
 resource "aws_elb" "web" {
     depends_on = ["aws_instance.web-1", "aws_instance.web-2"]
     name = "vfq-elb"
-    # availability_zones = ["${var.az_1}", "${var.az_2}"]
     subnets = ["${aws_subnet.VFQ-public-1.id}", "${aws_subnet.VFQ-public-2.id}"]
     listener {
         lb_port     = "80"
@@ -135,7 +134,7 @@ resource "aws_elb" "web" {
         instance_port     = "80"
         instance_protocol = "http"
     }
-    
+# https listener example:
     # listener {
     #     instance_port      = 443
     #     instance_protocol  = "http"
@@ -145,6 +144,7 @@ resource "aws_elb" "web" {
     #     ssl_certificate_id = "arn:aws:iam::123456789012:server-certificate/certName"
     # }
 
+# health_check example:
     # health_check {
     #     healthy_threshold   = 2
     #     unhealthy_threshold = 2
