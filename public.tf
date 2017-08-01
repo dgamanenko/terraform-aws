@@ -122,3 +122,53 @@ resource "aws_eip" "web-2" {
     instance = "${aws_instance.web-2.id}"
     vpc = true
 }
+
+resource "aws_elb" "web" {
+    depends_on = ["aws_instance.web-1", "aws_instance.web-2"]
+    name = "vfq-elb"
+    # availability_zones = ["${var.az_1}", "${var.az_2}"]
+    subnets = ["${aws_subnet.VFQ-public-1.id}", "${aws_subnet.VFQ-public-2.id}"]
+    listener {
+        lb_port     = "80"
+        lb_protocol = "http"
+
+        instance_port     = "80"
+        instance_protocol = "http"
+    }
+    
+    # listener {
+    #     instance_port      = 443
+    #     instance_protocol  = "http"
+    
+    #     lb_port            = 443
+    #     lb_protocol        = "https"
+    #     ssl_certificate_id = "arn:aws:iam::123456789012:server-certificate/certName"
+    # }
+
+    # health_check {
+    #     healthy_threshold   = 2
+    #     unhealthy_threshold = 2
+    #     timeout             = 3
+    #     target              = "HTTP:80/"
+    #     interval            = 30
+    # }
+
+    cross_zone_load_balancing   = true
+    idle_timeout                = 400
+    connection_draining         = true
+    connection_draining_timeout = 400
+
+    tags {
+        Name = "VFQ ELB"
+    }
+}
+
+resource "aws_elb_attachment" "web-1" {
+    elb = "${aws_elb.web.id}"
+    instance = "${aws_instance.web-1.id}"
+}
+
+resource "aws_elb_attachment" "web-2" {
+    elb = "${aws_elb.web.id}"
+    instance = "${aws_instance.web-2.id}"
+}
