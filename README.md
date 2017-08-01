@@ -1,7 +1,7 @@
 # Terraform AWS
 
 This repository contains a Terraform project that builds VPC
-with 2 Public, 2 Private Subnets, Nat Instance, 2 Web Instances and 3 DB instances.
+with 2 Public, 2 Private Subnets, Nat Instance, 2 Web Instances, ELB and 3 DB instances.
 
 ## Terraform Version
 ```
