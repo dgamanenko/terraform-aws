@@ -30,29 +30,11 @@ resource "aws_security_group" "web" {
         cidr_blocks = ["0.0.0.0/0"]
     }
 
-    egress { # The default port for mongod and mongos instances
-        from_port = 27017
-        to_port = 27017
-        protocol = "tcp"
-        cidr_blocks = ["${var.private_subnet_cidr_1}","${var.private_subnet_cidr_2}"]
-    }
-    egress { # The default port when running with --shardsvr runtime operation or the shardsvr value for the clusterRole setting in a configuration file.
-        from_port = 27018
-        to_port = 27018
-        protocol = "tcp"
-        cidr_blocks = ["${var.private_subnet_cidr_1}","${var.private_subnet_cidr_2}"]
-    }
-    egress { # The default port when running with --configsvr runtime operation or the configsvr value for the clusterRole setting in a configuration file.
-        from_port = 27019
-        to_port = 27019
-        protocol = "tcp"
-        cidr_blocks = ["${var.private_subnet_cidr_1}","${var.private_subnet_cidr_2}"]
-    }
-    egress { # The default port for the web status page. The web status page is always accessible at a port number that is 1000 greater than the port determined by port.
-        from_port = 28017
-        to_port = 28017
-        protocol = "tcp"
-        cidr_blocks = ["${var.private_subnet_cidr_1}","${var.private_subnet_cidr_2}"]
+    egress {
+        from_port = 0
+        to_port = 65535
+        protocol    = "tcp"
+        cidr_blocks = ["${var.vpc_cidr}"]
     }
     egress {
         from_port = 80

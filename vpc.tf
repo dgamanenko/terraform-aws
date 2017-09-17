@@ -71,6 +71,12 @@ resource "aws_security_group" "nat" {
         cidr_blocks = ["0.0.0.0/0"]
     }
     egress {
+        from_port = 0
+        to_port = 65535
+        protocol    = "tcp"
+        cidr_blocks = ["${var.vpc_cidr}"]
+    }
+    egress {
         from_port = 22
         to_port = 22
         protocol = "tcp"
@@ -87,6 +93,27 @@ resource "aws_security_group" "nat" {
 
     tags {
         Name = "VFQ NATSG"
+    }
+}
+
+data "template_file" "ansible_hosts" {
+   template = "${ file("./templates/ansible_hosts.template")}"
+   vars {
+     arbiter1_ip_address = "${aws_instance.db-arbiter.private_ip}"
+     mongo1_ip_address = "${aws_instance.db-1.private_ip}"
+     mongo2_ip_address = "${aws_instance.db-2.private_ip}"
+     ssh_pubfile = "${var.aws_key_path}"
+   }
+}
+
+data "template_file" "hosts" {
+   template = "${ file("./templates/hosts.template")}"
+   vars{
+      arbiter1_private_ip = "${aws_instance.db-arbiter.private_ip}"
+      mongo1_private_ip = "${aws_instance.db-1.private_ip}"
+      mongo2_private_ip = "${aws_instance.db-2.private_ip}"
+      web_1_private_ip = "${aws_instance.web-1.private_ip}"
+      web_2_private_ip = "${aws_instance.web-2.private_ip}"
     }
 }
 
@@ -121,12 +148,68 @@ resource "aws_instance" "nat" {
     provisioner "remote-exec" {
         inline = [
             "chmod 600 ~/.ssh/vfq_id_rsa.private",
+            "sudo yum install -y git gcc libffi-devel openssl-devel",
+            "virtualenv ~/venv",
+            "~/venv/bin/pip install ansible==2.3.2.0",
             ]
         }
         connection { 
             user = "ec2-user" 
             private_key = "${ file("${var.private_key_path}")}"
         }
+
+    # provisioner "local-exec" {
+    #     command="echo '127.0.0.1 localhost' >./private_ips"
+    # }
+    # provisioner "local-exec" {
+    #     command="echo '${self.private_ip} nat' >>./private_ips"
+    # }
+    # provisioner "local-exec" {
+    #     command="echo '${aws_instance.db-arbiter.private_ip} arbiter1' >>./private_ips"
+    # }
+    # provisioner "local-exec" {
+    #     command="echo '${aws_instance.db-1.private_ip} mongo1' >>./private_ips"
+    # }
+    # provisioner "local-exec" {
+    #     command="echo '${aws_instance.db-2.private_ip} mongo2' >>./private_ips"
+    # }
+    # provisioner "local-exec" {
+    #     command="echo '${aws_instance.web-1.private_ip} web1' >>./private_ips"
+    # }
+    # provisioner "local-exec" {
+    #     command="echo '${aws_instance.web-2.private_ip} web2' >>./private_ips"
+    # }
+
+    provisioner "remote-exec" {
+        inline = [
+            "mkdir -p ~/inventory/",
+        ]
+    }
+
+    provisioner "local-exec" {
+        command = "cat ${data.template_file.hosts.rendered} > private_ips"
+    }
+    provisioner "file" {
+        source      = "./private_ips"
+        destination = "~/inventory/private_ips"
+        connection { 
+            user = "ec2-user" 
+            private_key = "${ file("${var.private_key_path}")}"
+        }
+    }
+
+    provisioner "local-exec" {
+        command = "cat ${data.template_file.ansible_hosts.rendered} > ansible_hosts"
+    }
+    provisioner "file" {
+        source      = "./ansible_hosts"
+        destination = "~/inventory/ansible_hosts"
+        connection { 
+            user = "ec2-user" 
+            private_key = "${ file("${var.private_key_path}")}"
+        }
+    }
+
 }
 
 resource "aws_eip" "nat" {

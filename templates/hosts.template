@@ -1,0 +1,6 @@
+127.0.0.1 localhost
+${arbiter1_private_ip} arbiter1
+${mongo1_private_ip} mongo1
+${mongo2_private_ip} mongo2
+${web_1_private_ip} web1
+${web_2_private_ip} web2
